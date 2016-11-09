@@ -1,0 +1,90 @@
+canvas{
+    width: 100% !important;
+    max-width: 2200px;
+    height: auto !important;
+    max-height:1000px;
+}
+
+.chartLegend li span{
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-right: 5px;
+}
+
+
+/*  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+.chartLegend li {
+    display: inline;
+    padding-right: 2px;
+}
+
+.bar-legend li {
+    list-style: none;
+}
+
+.line-legend li {
+    list-style: none;   
+}
+
+.doughnut-legend li {
+    list-style: none;   
+}
+
+.align-center {
+    text-align: center;
+}
+
+.align-right {
+    text-align: right;
+}
+/*  ~~~~~~~~~~~~~Ejemplo para formatear la tabla~~~~~~~~~~~~~~~ */
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    text-align: center;
+    padding: 1px;
+	vertical-align:top;
+	border-style:solid;
+	border-width:1px;
+	font-size:15px;
+}
+
+table2 {
+    border-collapse: collapse;
+    width: 400;
+}
+
+tr:nth-child(even){background-color: #f2f2f2}
+
+th {
+    background-color: #4CAF50;
+    color: white;
+}
+
+/* tr:hover {background-color: #2EFE2E} 
+/*  ~~~~~~~~~~~~~Ejemplo para formatear medidores~~~~~~~~~~~~~~~ */
+
+#wrap {
+   width:400px;
+   margin:0 auto;
+
+}
+#left_col {
+   float:left;
+   width:200px;
+}
+#right_col {
+   float:right;
+   width:200px;
+   background-color: #FFFFFF; 
+}
+
+.tabla tr:hover td{
+background-color:#2EFE2E;
+} 

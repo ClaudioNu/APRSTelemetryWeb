@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="description" content="Pagina web de telemetría experimental en tiempo real de PICHON I">
+  <meta name="keywords" content="HAB,baloon,balooning,HAM,hamradio,radioamateur,radioclub,CX1AA,CX,GAVILAN,PICHON">
+  <meta name="author" content="Claudio CX8FS">
+    
+  <title>RCU - Telemetr&iacute;a de CX1AA-11</title>
+  <script type="text/javascript" src="https://cdn.firebase.com/js/client/2.4.2/firebase.js"></script>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.12.4.min.js"></script> 
+  <script type="text/javascript" src="https://www.google.com/jsapi"></script> <!-- Gauge  -->
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>  <!-- Gauge  -->  
+  <script>
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+	ga('create', 'UA-76012832-1', 'auto');
+	ga('send', 'pageview');
+
+  </script>
+  <link rel="stylesheet" type="text/css" href="firechart.css"> 
+ 
+</head>
+<body style="margin:20px">
+<noscript>
+	<style type="text/css">
+		.pagecontainer {display:none;}
+	</style>
+	<div class="noscriptmsg">
+		<h1 class="align-center">ATENCION!!!!<br>No tienes Javascript habilitado.<br>Es necesario para la ejecuci&oacute;n de este sitio. <br>Consulta la documentaci&oacute;n de tu navegador.</h1>
+	</div>
+</noscript>
+    
+<table>
+	<tbody>
+		<tr>
+			<td style="width: 25%; border-width: 0px;"><img class="align-left" src="LogoGavilan.jpg" alt="Gavilan RCU" height="130" width="262"></td>
+			<td style="width: 50%; border-width: 0px;"><h1 class="align-center">Proyecto Gavilan <br>Tabla de Telemetr&iacute;a de CX1AA-11<br>Misi&oacute;n Experimental PICHON 1</h1></td>
+			<td style="width: 25%; border-width: 0px;"><h5 class="align-right"></h5></td>
+		</tr>
+	</tbody>
+</table>
+	<div id="wrap">
+        <div id="left_col">
+           <div id="chart_divVTx" style="width: 200px; height: 200px;"></div>
+       </div>
+       <div id="right_col">
+           <div id="chart_divVRx" style="width: 200px; height: 200px;"></div>
+       </div>
+   </div>	      
+    <div>.</div> <!-- Problemas si se saca!! ;-) -->
+	
+	<div style="overflow-x:auto;">
+		<table id="leaderboardTable" class="tabla"></table>
+	</div>
+
+<script type="text/javascript">
+
+  var LEADERBOARD_SIZE = 50;
+  var  LastVTX = 0;   // Gauge
+  var  LastVRX = 0;   // Gauge
+  
+  // Build some firebase references.
+  var rootRef = new Firebase('https://polluelo1-5bab1.firebaseio.com/');
+  
+  // Apunto dinamicamente el path a la fecha actual.
+  var date = new Date();
+  var Year = date.getFullYear();
+  var Month = ("0" + (date.getMonth() + 1)).slice(-2);
+  var Day = ("0" + date.getDate()).slice(-2);
+  //var path = Year +"/" +Month+"/" + Day;
+  var path = "2016/09/03";      // queda acá para poner la fecha a mano... ;-)
+  
+  var scoreListRef = rootRef.child("CX1AA-11/location/" + path);
+
+  // Keep a mapping of firebase locations to HTML elements, so we can move / remove elements as necessary.
+  var htmlForPath = {};
+
+  // Creo los titulos
+  var TitleRow = $("<tr/>");
+	TitleRow.append($("<th/>").append($("<strong/>").append("Secuencia<br> ")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Timestamp<br>(UTC)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Hora Tx<br>(UTC)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Fecha<br>")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Temp. Int.<br>(&deg;C)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Temp. Ext.1<br> (&deg;C)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Temp. Ext.2<br> (&deg;C)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Temp. Ext.3<br> (&deg;C)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Humedad<br>(%RH)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Voltaje Rx<br>(Volts)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Voltaje Tx<br>(Volts)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Consumo Rx<br>(Amperes)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Consumo Tx<br>(Amperes)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Altura<br>(Mts.)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Velocidad<br>(Km/h)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Latitud<br>(°)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Longitud<br>(°)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Presi&oacute;n<br>(hPa)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("GPS Stat<br>(A/V)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("GPS QI<br>(Num.)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Num. Sats<br>(Num.)")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Curso<br>(°)")));
+
+	TitleRow.append($("<th/>").append($("<strong/>").append("posambiguity<br>")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("posresolution<br>")));
+	TitleRow.append($("<th/>").append($("<strong/>").append("Digied<br>")));
+	$("#leaderboardTable").append(TitleRow);	
+	
+  // Helper function that takes a new score snapshot and adds an appropriate row to our leaderboard table.
+  function handleScoreAdded(scoreSnapshot, prevScoreCtrl) {
+
+  // Create a new JavaScript Date object based on the timestamp
+  // multiplied by 1000 so that the argument is in milliseconds, not seconds.
+  var date = new Date(scoreSnapshot.key()*1000);
+  // Hours part from the timestamp
+  var hours = date.getUTCHours();
+  // Minutes part from the timestamp
+  var minutes = "0" + date.getUTCMinutes();
+  // Seconds part from the timestamp
+  var seconds = "0" + date.getUTCSeconds();
+  //var date = date.getDate();
+  // Will display time in 10:30:23 format
+  var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+  //console.log('time:', formattedTime);
+  
+ //   var digiesRef = scoreSnapshot.child('digipeaters');
+//    digiesRef.forEach(function(childSnapshot) {
+//		var key = childSnapshot.key();
+		//var digiesRef2.child('3');
+		
+		//var childData = digiesRef2.val();
+		//console.log('digi:', childData);
+//	});
+	
+
+  
+	var newScoreRow = $("<tr/>");
+    newScoreRow.append($("<td/>").append($("<em/>").text(scoreSnapshot.val().Count)));
+	newScoreRow.append($("<td/>").text(formattedTime));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().Hora));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().Fecha));
+    newScoreRow.append($("<td/>").text(scoreSnapshot.val().TempInt1));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().TempExt1));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().TempExt2));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().TempExt3));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().HumedadEx1));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().VoltsRx.replace(/\./g,',')));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().VoltsTx.replace(/\./g,',')));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().AmpsRx.replace(/\./g,',')));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().AmpsTx.replace(/\./g,',')));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().altitude.replace(/\./g,',')));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().speed.replace(/\./g,',')));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().latitude));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().longitude));
+	
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().Press1));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().StatusGPS));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().GPSQI));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().NumSat));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().course));
+
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().posambiguity));
+	newScoreRow.append($("<td/>").text(scoreSnapshot.val().posresolution.replace(/\./g,',')));
+	
+   	// Store a reference to the table row so we can get it again later.
+    htmlForPath[scoreSnapshot.key()] = newScoreRow;
+
+    // Insert the new score in the appropriate place in the table.
+    if (prevScoreCtrl === null) {
+      $("#leaderboardTable").append(newScoreRow);
+    }
+    else {
+      var lowerScoreRow = htmlForPath[prevScoreCtrl];
+      lowerScoreRow.before(newScoreRow);
+    }
+  }
+
+  // Helper function to handle a score object being removed; just removes the corresponding table row.
+  function handleScoreRemoved(scoreSnapshot) {
+    var removedScoreRow = htmlForPath[scoreSnapshot.key()];
+    removedScoreRow.remove();
+    delete htmlForPath[scoreSnapshot.key()];
+  }
+
+  // Create a view to only receive callbacks for the last LEADERBOARD_SIZE scores
+  var scoreListView = scoreListRef.limitToLast(LEADERBOARD_SIZE);
+  var scoreListLast = scoreListRef.limitToLast(1);                          // Gauge
+	
+  // Add a callback to handle when a new score is added.
+  scoreListView.orderByKey().on('child_added', function (newScoreSnapshot, prevScoreCtrl) {
+    handleScoreAdded(newScoreSnapshot, prevScoreCtrl);
+  });
+  
+  scoreListLast.on('child_added', function (newScoreSnapshot, prevScoreCtrl) {  // Gauge
+    LastVTX = newScoreSnapshot.val().VoltsTx;
+  	dataVTx.setValue(0, 1, LastVTX);                        // Gauge
+    LastVRX = newScoreSnapshot.val().VoltsRx;
+  	dataVRx.setValue(0, 1, LastVRX);                        // Gauge
+    gaugeVTx.draw(dataVTx, optionsVTx);                     // Gauge
+    gaugeVRx.draw(dataVRx, optionsVRx);                     // Gauge
+	}); 
+  
+  scoreListLast.on('child_changed', function (newScoreSnapshot, prevScoreCtrl) {  // Gauge
+    LastVTX = newScoreSnapshot.val().VoltsTx;
+  	dataVTx.setValue(0, 1, LastVTX);                        // Gauge
+    LastVRX = newScoreSnapshot.val().VoltsRx;
+  	dataVRx.setValue(0, 1, LastVRX);                        // Gauge
+    gaugeVTx.draw(dataVTx, optionsVTx);                     // Gauge
+    gaugeVRx.draw(dataVRx, optionsVRx);                     // Gauge
+	});
+  
+  // Add a callback to handle when a score is removed
+  scoreListView.on('child_removed', function (oldScoreSnapshot) {
+    handleScoreRemoved(oldScoreSnapshot);
+  });
+
+  // Add a callback to handle when a score changes or moves positions.
+  var changedCallback = function (scoreSnapshot, prevScoreCtrl) {
+    handleScoreRemoved(scoreSnapshot);
+    handleScoreAdded(scoreSnapshot, prevScoreCtrl);
+  };
+  scoreListView.on('child_moved', changedCallback);
+  scoreListView.on('child_changed', changedCallback);
+ 
+/////////////////////////////////////////////////////////////////////////////////	
+//	
+  google.charts.load('current', {packages: ['gauge']});
+  google.charts.setOnLoadCallback(drawGauge);
+ var dataVTx;
+ var dataVRx;
+ var gaugeVTx;
+ var gaugeVRx;
+ var optionsVTx;
+ var optionsVRx;
+ 
+function drawGauge() {
+	dataVTx = google.visualization.arrayToDataTable([
+		['Label', 'Value'],
+		['Volts Tx', LastVTX]
+	]);		
+
+	dataVRx = google.visualization.arrayToDataTable([
+		['Label', 'Value'],
+		['Volts Rx', LastVRX]
+	]);
+		
+	optionsVTx = {
+		width: 200, height: 200,
+		redFrom: 5, redTo: 6,
+		yellowFrom:6, yellowTo: 6.9,
+		greenFrom: 6.9, greenTo: 8.5,
+		minorTicks: 5, majorTicks: ['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5'], 
+		min: 5, max: 8.5
+	};
+		
+	optionsVRx = {
+		width: 200, height: 200,
+		redFrom: 5, redTo: 6,
+		yellowFrom:6, yellowTo: 6.9,
+		greenFrom: 6.9, greenTo: 8.5,
+        minorTicks: 5, majorTicks: ['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5'], 
+		min: 5, max: 8.5
+    };
+		
+    gaugeVTx = new google.visualization.Gauge(document.getElementById('chart_divVTx'));
+    gaugeVRx = new google.visualization.Gauge(document.getElementById('chart_divVRx'));
+	gaugeVTx.draw(dataVTx, optionsVTx);
+	gaugeVRx.draw(dataVRx, optionsVRx);
+}
+</script>
+
+<table>
+	<tbody>
+		<tr>
+			<td style="width: 33%; border-width: 0px;"><h5 class="align-left"></h5></td>
+			<td style="width: 33%; border-width: 0px;"><h4 class="align-center">Radio Club Uruguayo
+				<br>Informaci&oacute;n en tiempo real<br>Si tiene dudas o consultas cont&aacute;ctenos<br>
+				<p>Contacto:<a href="mailto:Globo.rcu@gmail.com?Subject=Evento PICHON%20I" target="_top">Enviar Correo</a>
+				</p></h4></td>
+			<td style="width: 33%; border-width: 0px;"><h6 class="align-right">Versi&oacute;n: 0.7 22/08/2016<br>Hecho con orgullo en Uruguay</h6></td>
+		</tr>
+	</tbody>
+</table>
+
+</body>
+<!--  solo para Curiosos - Fuentes:
+http://code.runnable.com/UnA16zlk6cVmAAA0/firebase-leaderboard-example-for-javascript
+http://www.w3schools.com/css/tryit.asp?filename=trycss_table_color
+http://www.456bereastreet.com/lab/developing_with_web_standards/csslayout/2-col/
+-->
+
+</html>
